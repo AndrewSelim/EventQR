@@ -4,7 +4,6 @@ const html5QrCode = new Html5Qrcode('scanner');
 // Function to handle successful QR code scan
 function onScanSuccess(qrCodeMessage) {
     const resultDiv = document.getElementById('result');
-    resultDiv.innerText = `Scanned QR code: ${qrCodeMessage}`;
 
     // Send the scanned QR code to the server for verification
     fetch('verify.php', {
@@ -16,14 +15,17 @@ function onScanSuccess(qrCodeMessage) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.exists) {
-            resultDiv.innerText += '\nThis QR code was scanned before.';
+        if (data.isValid) {
+            resultDiv.innerText = 'Success: Ticket verified.';
+        } else if (data.isScannedBefore) {
+            resultDiv.innerText = 'Scanned before: Ticket already used.';
         } else {
-            resultDiv.innerText += '\nThis QR code is new. Adding it to the list...';
+            resultDiv.innerText = 'Not found: Ticket not valid.';
         }
     })
     .catch(error => {
         console.error('Error:', error);
+        resultDiv.innerText = 'Error: Something went wrong.';
     });
 }
 
