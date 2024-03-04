@@ -1,11 +1,9 @@
 <?php
 session_start();
 
-// Define valid QR codes
-$validQRCodes = ["1", "5556", "12345678"];
-// Initialize list of people who have arrived
-if (!isset($_SESSION['arrivedPeople'])) {
-    $_SESSION['arrivedPeople'] = [];
+// Initialize list of scanned QR codes
+if (!isset($_SESSION['scannedQRCodes'])) {
+    $_SESSION['scannedQRCodes'] = [];
 }
 
 // Read JSON input from the client-side
@@ -28,16 +26,13 @@ function verifyQRCode() {
             throw new Exception('QR code not provided.');
         }
 
-        if (in_array($qrCode, $_SESSION['arrivedPeople'])) {
+        if (in_array($qrCode, $_SESSION['scannedQRCodes'])) {
             $response['status'] = 'Scanned before';
             $response['message'] = 'This QR code has already been scanned before.';
-        } elseif (in_array($qrCode, $GLOBALS['validQRCodes'])) {
-            $response['status'] = 'Success';
-            $response['message'] = 'QR code verified. Welcome!';
-            $_SESSION['arrivedPeople'][] = $qrCode; // Add QR code to list of arrived people
         } else {
-            $response['status'] = 'Not found';
-            $response['message'] = 'QR code not found in the list of valid codes.';
+            $response['status'] = 'Success';
+            $response['message'] = 'QR code scanned successfully.';
+            $_SESSION['scannedQRCodes'][] = $qrCode; // Add QR code to list of scanned codes
         }
     } catch (Exception $e) {
         $response['status'] = 'Error';
