@@ -1,5 +1,5 @@
-// Function to handle QR code scanning
-function scanQRCode() {
+// Function to start QR code scanning
+function startQRCodeScanner() {
     // Check if the browser supports getUserMedia
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         alert('Your browser does not support accessing the camera for scanning QR codes.');
@@ -10,22 +10,18 @@ function scanQRCode() {
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
         .then(function (stream) {
             // Get the video element
-            var videoElement = document.getElementById('video');
+            var videoElement = document.createElement('video');
+            videoElement.setAttribute('playsinline', '');
+            videoElement.srcObject = stream;
 
-            // Set the video stream as the source for the video element
-            if ('srcObject' in videoElement) {
-                videoElement.srcObject = stream;
-            } else {
-                videoElement.src = window.URL.createObjectURL(stream);
-            }
+            // Add the video element to the DOM
+            document.body.appendChild(videoElement);
 
             // Play the video to start the camera preview
             videoElement.play();
 
-            // Initiate QR code scanning using a library like zxing-js
-            // Replace this with your QR code scanning implementation
-            // zxing-js is just an example, you can use any other library
-            zxingQRScan(videoElement);
+            // Start scanning for QR codes
+            scanQRCode(videoElement);
         })
         .catch(function (error) {
             console.error('Error accessing camera:', error);
@@ -33,29 +29,51 @@ function scanQRCode() {
         });
 }
 
-// Example function to initiate QR code scanning using zxing-js library
-function zxingQRScan(videoElement) {
-    // Initialize zxing barcode detector
-    const codeReader = new ZXing.BrowserQRCodeReader();
-
-    // Start scanning for QR codes
-    codeReader.decodeFromVideoElement(videoElement, (result, error) => {
-        if (result) {
-            // QR code scanned successfully, handle the result
-            handleQRCodeResult(result.text);
-        } else if (error) {
-            // Error occurred while scanning QR code
-            console.error('Error scanning QR code:', error);
-            alert('An error occurred while scanning the QR code. Please try again.');
-        }
+// Function to stop QR code scanning
+function stopQRCodeScanner() {
+    // Stop the camera stream
+    var videoElements = document.querySelectorAll('video');
+    videoElements.forEach(function (videoElement) {
+        var stream = videoElement.srcObject;
+        var tracks = stream.getTracks();
+        tracks.forEach(function (track) {
+            track.stop();
+        });
+        videoElement.srcObject = null;
+        videoElement.parentNode.removeChild(videoElement);
     });
 }
 
+// Function to scan QR code from video stream
+function scanQRCode(videoElement) {
+    // Create canvas element to draw video frames
+    var canvasElement = document.createElement('canvas');
+    var canvasContext = canvasElement.getContext('2d');
+    canvasElement.width = videoElement.videoWidth;
+    canvasElement.height = videoElement.videoHeight;
+
+    // Draw video frames onto the canvas and decode QR code
+    var scanFrame = function () {
+        canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+        var imageData = canvasContext.getImageData(0, 0, canvasElement.width, canvasElement.height);
+        var code = jsQR(imageData.data, imageData.width, imageData.height);
+        if (code) {
+            // QR code found, handle the result
+            handleQRCodeResult(code.data);
+        } else {
+            // QR code not found in the current frame, continue scanning
+            requestAnimationFrame(scanFrame);
+        }
+    };
+
+    // Start scanning for QR codes
+    requestAnimationFrame(scanFrame);
+}
+
 // Function to handle the scanned QR code result
-function handleQRCodeResult(qrCode) {
-    // Process the scanned QR code
-    alert('Scanned QR code: ' + qrCode);
+function handleQRCodeResult(qrCodeData) {
+    alert('Scanned QR code: ' + qrCodeData);
 }
 
 // Call the function to start QR code scanning
-scanQRCode();
+startQRCodeScanner();
