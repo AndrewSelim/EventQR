@@ -1,44 +1,61 @@
 // Function to handle QR code scanning
-function scanQRCode(qrCode) {
-    // Send the QR code to the server for verification
-    fetch('verify.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ qrCode: qrCode })
-    })
-    .then(response => response.json())
-    .then(data => {
-        // Process the response from the server
-        displayScanResult(data);
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        displayErrorMessage('Something went wrong. Please try again.');
+function scanQRCode() {
+    // Check if the browser supports getUserMedia
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('Your browser does not support accessing the camera for scanning QR codes.');
+        return;
+    }
+
+    // Access the camera stream
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+        .then(function (stream) {
+            // Get the video element
+            var videoElement = document.getElementById('video');
+
+            // Set the video stream as the source for the video element
+            if ('srcObject' in videoElement) {
+                videoElement.srcObject = stream;
+            } else {
+                videoElement.src = window.URL.createObjectURL(stream);
+            }
+
+            // Play the video to start the camera preview
+            videoElement.play();
+
+            // Initiate QR code scanning using a library like zxing-js
+            // Replace this with your QR code scanning implementation
+            // zxing-js is just an example, you can use any other library
+            zxingQRScan(videoElement);
+        })
+        .catch(function (error) {
+            console.error('Error accessing camera:', error);
+            alert('Failed to access the camera for scanning QR codes. Please check your camera permissions and try again.');
+        });
+}
+
+// Example function to initiate QR code scanning using zxing-js library
+function zxingQRScan(videoElement) {
+    // Initialize zxing barcode detector
+    const codeReader = new ZXing.BrowserQRCodeReader();
+
+    // Start scanning for QR codes
+    codeReader.decodeFromVideoElement(videoElement, (result, error) => {
+        if (result) {
+            // QR code scanned successfully, handle the result
+            handleQRCodeResult(result.text);
+        } else if (error) {
+            // Error occurred while scanning QR code
+            console.error('Error scanning QR code:', error);
+            alert('An error occurred while scanning the QR code. Please try again.');
+        }
     });
 }
 
-// Function to display the scan result
-function displayScanResult(data) {
-    if (data.status === 'Success') {
-        if (data.message === 'Scanned before') {
-            alert('QR code has already been scanned before.');
-        } else {
-            alert('QR code verified. Welcome!');
-        }
-    } else if (data.status === 'Not found') {
-        alert('QR code not found in the list of valid codes.');
-    } else {
-        alert('An error occurred while processing the QR code.');
-    }
+// Function to handle the scanned QR code result
+function handleQRCodeResult(qrCode) {
+    // Process the scanned QR code
+    alert('Scanned QR code: ' + qrCode);
 }
 
-// Function to display error message
-function displayErrorMessage(message) {
-    alert(message);
-}
-
-// Example usage: Call scanQRCode function with the scanned QR code
-// Replace 'scannedQRCode' with the actual scanned QR code value
-scanQRCode('scannedQRCode');
+// Call the function to start QR code scanning
+scanQRCode();
