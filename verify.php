@@ -1,12 +1,17 @@
 <?php
+// Valid QR codes array
+$validQRCodes = array("1234567", "18887773");
+
 // Read JSON input from the client-side
 $data = json_decode(file_get_contents('php://input'), true);
 
-// Simulate database verification (replace this with your actual database logic)
-$scannedCodes = []; // Array to store scanned QR codes
+// Extract the QR code from the input data
 $qrCode = $data['qrCode'];
-$exists = in_array($qrCode, $scannedCodes);
+
+// Check if the QR code is valid
+$isValid = in_array($qrCode, $validQRCodes);
 
 // Return verification result as JSON
 header('Content-Type: application/json');
-echo json_encode(['exists' => $exists]);
+echo json_encode(['isValid' => $isValid]);
+?>
