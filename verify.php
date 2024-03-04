@@ -1,6 +1,6 @@
 <?php
 // Valid QR codes array
-$validQRCodes = array("1234567", "18887773");
+$validQRCodes = array("12345678", "18887773");
 
 // Read JSON input from the client-side
 $data = json_decode(file_get_contents('php://input'), true);
