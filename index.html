@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@2.0.1/dist/jsQR.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR Code Scanner</title>
     <style>
+        #scanner {
+            width: 100%;
+            height: auto;
+        }
         #result {
             margin-top: 20px;
             font-weight: bold;
@@ -14,10 +17,60 @@
 </head>
 <body>
     <h1>QR Code Scanner</h1>
-    <div id="scanner"></div>
+    <video id="scanner"></video>
     <div id="result"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.0.1/html5-qrcode.min.js"></script>
-    <script src="app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/instascan/1.0.1/instascan.min.js"></script>
+    <script>
+        // Create a new Instascan scanner instance
+        let scanner = new Instascan.Scanner({ video: document.getElementById('scanner') });
+
+        // Add listener for when a QR code is scanned
+        scanner.addListener('scan', function (content) {
+            // Display the scanned QR code content
+            document.getElementById('result').innerText = 'Scanned QR code: ' + content;
+            
+            // Send the scanned QR code to the server for verification
+            fetch('verify.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ qrCode: content })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Process the response from the server
+                if (data.isValid) {
+                    if (data.isScannedBefore) {
+                        alert('QR code scanned before.');
+                    } else {
+                        alert('Valid QR code.');
+                    }
+                } else {
+                    alert('Invalid QR code.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while verifying the QR code.');
+            });
+        });
+
+        // Start the scanner
+        Instascan.Camera.getCameras()
+            .then(function (cameras) {
+                if (cameras.length > 0) {
+                    scanner.start(cameras[0]); // Start scanning using the first available camera
+                } else {
+                    console.error('No cameras found.');
+                    alert('No cameras found. Please make sure you have a camera available.');
+                }
+            })
+            .catch(function (error) {
+                console.error('Error accessing camera:', error);
+                alert('Error accessing camera. Please check your camera permissions and try again.');
+            });
+    </script>
 </body>
 </html>
