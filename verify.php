@@ -32,7 +32,7 @@ function getQRCodeFromRequest() {
 // Main function to verify the QR code
 function verifyQRCode() {
     initializeSession();
-    
+
     $response = [
         'isValid' => false,
         'isScannedBefore' => false,
@@ -61,6 +61,7 @@ function verifyQRCode() {
         }
     } catch (Exception $e) {
         $response['errorMessage'] = $e->getMessage();
+        error_log('Error in verifyQRCode function: ' . $e->getMessage());
     }
 
     // Return verification result as JSON
